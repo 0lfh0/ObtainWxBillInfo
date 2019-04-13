@@ -3,6 +3,7 @@ package com.example.a32960.moudletest;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Message;
@@ -23,11 +24,10 @@ import JSONJava.XML;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Socket socket;
     private List<JSONObject> billInfo = new ArrayList<JSONObject>();
     private BillDetailListAdapter billDetailListAdapter ;
 
-    private String testStr="mainactivity11111111";
+    private BillInfoReceiver receiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,60 +38,22 @@ public class MainActivity extends AppCompatActivity {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         String dateString = formatter.format(currentTime);
         System.out.println("时间时间：" +dateString);
-        testStr = "main activity 2222222";
-        billNotify("本地进程");
-//        ListView billDetailList = (ListView)findViewById(R.id.bill_detail_list);
-//
-//        billDetailListAdapter = new BillDetailListAdapter(this, billInfo);
-//        billDetailList.setAdapter(billDetailListAdapter);
-//        Toast.makeText(this, "开始搭建服务器...", Toast.LENGTH_SHORT).show();
-//        buildServerSocket();
+
+        ListView billDetailList = (ListView)findViewById(R.id.bill_detail_list);
+
+        billDetailListAdapter = new BillDetailListAdapter(this, billInfo);
+        billDetailList.setAdapter(billDetailListAdapter);
+        //注册广播
+        IntentFilter filter = new IntentFilter("com.example.a32960.moudletest");
+        receiver = new BillInfoReceiver( billDetailListAdapter, billInfo);
+        registerReceiver(receiver, filter);
     }
 
-    private void buildServerSocket()
+    @Override
+    protected  void onDestroy()
     {
-        final Context context = this;
-        Handler myHandler = new Handler() {
-            public void handleMessage(Message msg) {
-                int type = msg.what;
-                switch(type)
-                {
-                    case -1:
-                        Toast.makeText(context, "服务器异常，已停止!", Toast.LENGTH_SHORT).show();
-                        break;
-                    case 1:
-                        //已连接服务器
-                        Toast.makeText(context, "有新的连接!", Toast.LENGTH_SHORT).show();
-                        break;
-                    case 2:
-                        //接受信息
-                        Toast.makeText(context, "有新的数据!", Toast.LENGTH_SHORT).show();
-                        String xmlData = (String)msg.obj;
-                        JSONObject billInfoJson = XML.toJSONObject(xmlData);
-                        billInfo.add(billInfoJson);
-                        billDetailListAdapter.notifyDataSetChanged();
-                        break;
-
-                    case 3:
-                        Toast.makeText(context, "搭建服务端成功!", Toast.LENGTH_SHORT).show();
-                        break;
-
-                }
-
-            }
-        };
-        BuildServerSocketThread buildServerSocketThread = new BuildServerSocketThread(myHandler);
-        buildServerSocketThread.start();
+        super.onDestroy();
+        unregisterReceiver(receiver);
     }
-
-    public void billNotify(String xmlData)
-    {
-        Toast.makeText(this, xmlData + ": "+ testStr, Toast.LENGTH_SHORT).show();
-//        JSONObject billInfoJson = XML.toJSONObject(xmlData);
-//        billInfo.add(billInfoJson);
-//        billDetailListAdapter.notifyDataSetChanged();
-    }
-
-
 
 }

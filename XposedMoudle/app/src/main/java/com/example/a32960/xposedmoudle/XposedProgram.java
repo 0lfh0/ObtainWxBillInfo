@@ -2,6 +2,7 @@ package com.example.a32960.xposedmoudle;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -44,6 +45,7 @@ public class XposedProgram implements IXposedHookLoadPackage {
     private Method moduleTestClass_billNotify;
 
     private String testStr = "hello world";
+    private Context wxContext;
     public XposedProgram()
     {
         XposedBridge.log("创建Xposed Program实例");
@@ -61,34 +63,13 @@ public class XposedProgram implements IXposedHookLoadPackage {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable
     {
-        XposedBridge.log("打印testStr: " +testStr);
-        testStr += loadPackageParam.packageName;
-        XposedBridge.log("testStr 加上包名");
-        if(loadPackageParam.packageName.equals("com.example.a32960.moudletest"))
-        {
-//            try
-//            {
-//                Class billAppClass = Class.forName("com.example.a32960.moudletest.MainActivity");
-//                Object obj = billAppClass.getConstructor().newInstance();
-//                Method billAppClass_billNotify = billAppClass.getMethod("billNotify", String.class);
-//                billAppClass_billNotify.invoke(obj, "xposed");
-//            }catch(ClassNotFoundException cnfe)
-//            {
-//                XposedBridge.log("找不到类moudletest MainActivity class");
-//
-//            }catch(NoSuchMethodException nsme)
-//            {
-//                XposedBridge.log("找不到方法moudletest MainActivity class billNotify method");
-//            }
-            obtainModuleTest(loadPackageParam);
-            return;
-        }
+
 
         if(loadPackageParam.packageName.equals("com.tencent.mm"))
         {
             XposedBridge.log("打开微信包");
-
-            //hookBill(loadPackageParam.classLoader);
+            hookWxContext(loadPackageParam.classLoader);
+            hookBill(loadPackageParam.classLoader);
             return;
         }
 
@@ -96,56 +77,54 @@ public class XposedProgram implements IXposedHookLoadPackage {
 
     }
 
-
-    private void obtainModuleTest(XC_LoadPackage.LoadPackageParam loadPackageParam)
+    private void hookWxContext(final ClassLoader appClassLoader)
     {
-        final XposedProgram self = this;
-        self.moduleTestClass = XposedHelpers.findClass("com.example.a32960.moudletest.MainActivity", loadPackageParam.classLoader);
+        try {
+            Class<?> ContextClass = XposedHelpers.findClass("android.content.ContextWrapper", appClassLoader);
+            XposedHelpers.findAndHookMethod(ContextClass, "getApplicationContext", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    super.afterHookedMethod(param);
+                    if (wxContext != null)
+                        return;
+                    wxContext = (Context) param.getResult();
+                    Toast.makeText(wxContext, "hello "+ wxContext.getPackageName(), Toast.LENGTH_LONG).show();
+                    XposedBridge.log("得到上下文");
 
-        try
-        {
-            self.moduleTestClass_billNotify = moduleTestClass.getMethod("billNotify", String.class);
-            moduleTestClassObj = XposedHelpers.newInstance(moduleTestClass);
-            moduleTestClass_billNotify.invoke(moduleTestClassObj, "xposed");
-//            XposedHelpers.findAndHookMethod(
-//                    self.moduleTestClass,
-//                    "onCreate",
-//                    Bundle.class,
-//                    new XC_MethodHook() {
-//                @Override
-//                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-//                    super.afterHookedMethod(param);
-//                    self.moduleTestClassObj =  param.thisObject;
-//                    Toast.makeText((Context)(self.moduleTestClassObj), "module test activity oncreate", Toast.LENGTH_LONG).show();
-//                    self.moduleTestClass_billNotify.invoke(self.moduleTestClassObj, testStr);
-//                    XposedBridge.log("module test 创建了实例");
-//                }
-//            });
-
-        }catch (NoSuchMethodException noSuchMethodException)
-        {
-            XposedBridge.log("找不到 billNotify method");
-        }catch (Throwable t)
-        {
-            XposedBridge.log("hook method 失败");
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("获取上下文出错");
+            XposedBridge.log(t);
+            wxContext = null;
         }
-
     }
 
-    private void hookBill(final ClassLoader appClassLoader) {
-        final XposedProgram self = this;
+    private void hookBill(final ClassLoader appClassLoader)
+    {
+        final String data = "<id>" + 12345 + "</id>" +
+                "<time>" + "12:00" + "</time>" +
+                "<topline>" + "<key>" + "收款金额" + "</key>" + "<value>" + "100" + "</value>" + "</topline>" +
+                "<line>" + "<key>" + "汇总" + "</key>" + "<value>" + "测试测试" + "</value>" + "</line>" +
+                "<line>" + "<key>" + "备注" + "</key>" + "<value>" + "测试测试" + "</value>" + "</line>";
+
+        final Intent intent = new Intent("com.example.a32960.moudletest");
+        intent.putExtra("xmlData", data);
         XposedHelpers.findAndHookMethod("com.tencent.wcdb.database.SQLiteDatabase", appClassLoader, "insert", String.class, String.class, ContentValues.class,
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param)
                             throws Throwable {
+                        //把信息广播出去
+                        XposedBridge.log("把信息广播出去");
+                        wxContext.sendBroadcast(intent);
+
                         try {
                             ContentValues contentValues = (ContentValues) param.args[2];
                             String tableName = (String) param.args[0];
                             if (TextUtils.isEmpty(tableName) || !tableName.equals("message")) {
 
-                                XposedBridge.log("不是message或者是空的消息：" + (String)param.args[0] + " : , " + (String)param.args[1] + " , " + param.args[2]);
-
+                                XposedBridge.log("不是message或者是空的消息");
                                 return;
                             }
                             Integer type = contentValues.getAsInteger("type");
@@ -203,15 +182,19 @@ public class XposedProgram implements IXposedHookLoadPackage {
 
                                 XposedBridge.log("开始通知客户端");
                                 XposedBridge.log("--------------------");
-                                String data = "<id>" + (billId ++ ) + "</id>" +
-                                        "<time>" + dateString + "</time>" +
-                                        "<topline>" + "<key>" + topLineKey + "</key>" + "<value>" + money + "</value>" + "</topline>" +
-                                        "<line>" + "<key>" + line0Title + "</key>" + "<value>" + line0Msg + "</value>" + "</line>" +
-                                        "<line>" + "<key>" + line1Title + "</key>" + "<value>" + line1Msg + "</value>" + "</line>";
+//                                String data = "<id>" + (billId ++ ) + "</id>" +
+//                                        "<time>" + dateString + "</time>" +
+//                                        "<topline>" + "<key>" + topLineKey + "</key>" + "<value>" + money + "</value>" + "</topline>" +
+//                                        "<line>" + "<key>" + line0Title + "</key>" + "<value>" + line0Msg + "</value>" + "</line>" +
+//                                        "<line>" + "<key>" + line1Title + "</key>" + "<value>" + line1Msg + "</value>" + "</line>";
                                 //billCollections.add(data);
                                 //ConnServerSocketThread connServerSocketThread = new ConnServerSocketThread(data);
                                 //connServerSocketThread.start();
-
+                                //把信息广播出去
+//                                Context context = (Context)param.thisObject;
+//                                Intent intent = new Intent("com.example.a32960.moudletest");
+//                                intent.putExtra("xmlData", data);
+//                                context.sendBroadcast(intent);
 
                             }
                         } catch (Exception e) {
