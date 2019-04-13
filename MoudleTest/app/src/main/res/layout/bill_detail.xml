@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingLeft="15dp"
+    android:paddingRight="15dp"
+    >
+
+    <!--时间 -->
+    <TextView
+        android:id="@+id/bill_detail_time_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="8sp"
+        android:textColor="#fff"
+        android:fontFamily="STHeiti"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="15dp"
+        android:padding="5dp"
+        android:background="@drawable/bill_detail_time_view_shape"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/bill_detail_view_shape"
+        android:layout_marginBottom="10dp"
+        >
+
+        <!-- 收款到账通知 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" 
+                android:text="收款到账通知"
+                android:textColor="#000000"
+                android:textStyle="bold"
+                android:fontFamily="STHeiti"/>
+        </LinearLayout>
+        
+        <!-- 收款金额-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_margin="15dp">
+            
+            <TextView
+                android:id="@+id/bill_item_money_type_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" 
+                android:text=""
+                android:textColor="#888888"
+                android:fontFamily="STHeiti"
+                android:textStyle="bold"/>
+            
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" 
+                    android:text="￥"
+                    android:textColor="#000000"
+                    android:textStyle="bold"
+                    android:fontFamily="STHeiti"
+                    android:textSize="20sp"/>
+                
+                <TextView
+                    android:id="@+id/bill_item_money_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" 
+                    android:text=""
+                    android:textColor="#000000"
+                    android:textStyle="bold"
+                    android:fontFamily="STHeiti"
+                    android:textSize="25sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 汇总   备注-->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_margin="15dp">
+
+            <!-- 汇总-->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                >
+
+                <TextView
+                    android:id="@+id/bill_detail_total_title_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:fontFamily="STHeiti"
+                    android:layout_marginRight="10dp"
+                    android:textColor="#888888"
+                    android:textStyle="bold"
+                    />
+
+                <TextView
+                    android:id="@+id/bill_detail_total_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:fontFamily="STHeiti"
+                    android:textColor="#000000"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <!-- 备注-->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="15dp">
+
+                <TextView
+                    android:id="@+id/bill_detail_remark_title_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:fontFamily="STHeiti"
+                    android:layout_marginRight="10dp"
+                    android:textColor="#888888"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/bill_detail_remark_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:fontFamily="STHeiti"
+                    android:textColor="#000000"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>
