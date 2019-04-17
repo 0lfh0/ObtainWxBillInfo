@@ -1,32 +1,18 @@
-package com.example.a32960.xposedmoudle;
+package com.example.a32960.moudletest;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.os.Bundle;
 import android.text.TextUtils;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
 
 import JSONJava.JSONArray;
 import JSONJava.JSONObject;
 import JSONJava.XML;
-
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -35,46 +21,16 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class XposedProgram implements IXposedHookLoadPackage {
 
-    private BuildServerSocketThread serverSocketThread;
-    private List<String> billCollections;
-    private int billId = 0;
-    private ServerSocket serverSocket;
-
-    private Class<?> moduleTestClass;
-    private Object moduleTestClassObj;
-    private Method moduleTestClass_billNotify;
-
-    private String testStr = "hello world";
     private Context wxContext;
-    public XposedProgram()
-    {
-        XposedBridge.log("创建Xposed Program实例");
-        XposedBridge.log("--------------------");
-        XposedBridge.log("开启server socket");
-        XposedBridge.log("--------------------");
-        XposedBridge.log(" XposedProgram() 当前线程：" + Thread.currentThread().getId());
-        XposedBridge.log("--------------------");
-        //billCollections = new ArrayList<String>();
-//        BuildServerSocketThread serverSocketThread = new BuildServerSocketThread();
-//        serverSocketThread.start();
-
-    }
-
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable
     {
-
-
         if(loadPackageParam.packageName.equals("com.tencent.mm"))
         {
-            XposedBridge.log("打开微信包");
             hookWxContext(loadPackageParam.classLoader);
             hookBill(loadPackageParam.classLoader);
             return;
         }
-
-
-
     }
 
     private void hookWxContext(final ClassLoader appClassLoader)
@@ -88,43 +44,28 @@ public class XposedProgram implements IXposedHookLoadPackage {
                     if (wxContext != null)
                         return;
                     wxContext = (Context) param.getResult();
-                    Toast.makeText(wxContext, "hello "+ wxContext.getPackageName(), Toast.LENGTH_LONG).show();
-                    XposedBridge.log("得到上下文");
 
                 }
             });
         } catch (Throwable t) {
             XposedBridge.log("获取上下文出错");
-            XposedBridge.log(t);
             wxContext = null;
         }
     }
 
     private void hookBill(final ClassLoader appClassLoader)
     {
-        final String data = "<id>" + 12345 + "</id>" +
-                "<time>" + "12:00" + "</time>" +
-                "<topline>" + "<key>" + "收款金额" + "</key>" + "<value>" + "100" + "</value>" + "</topline>" +
-                "<line>" + "<key>" + "汇总" + "</key>" + "<value>" + "测试测试" + "</value>" + "</line>" +
-                "<line>" + "<key>" + "备注" + "</key>" + "<value>" + "测试测试" + "</value>" + "</line>";
 
-        final Intent intent = new Intent("com.example.a32960.moudletest");
-        intent.putExtra("xmlData", data);
         XposedHelpers.findAndHookMethod("com.tencent.wcdb.database.SQLiteDatabase", appClassLoader, "insert", String.class, String.class, ContentValues.class,
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param)
                             throws Throwable {
-                        //把信息广播出去
-                        XposedBridge.log("把信息广播出去");
-                        wxContext.sendBroadcast(intent);
 
                         try {
                             ContentValues contentValues = (ContentValues) param.args[2];
                             String tableName = (String) param.args[0];
                             if (TextUtils.isEmpty(tableName) || !tableName.equals("message")) {
-
-                                XposedBridge.log("不是message或者是空的消息");
                                 return;
                             }
                             Integer type = contentValues.getAsInteger("type");
@@ -132,12 +73,12 @@ public class XposedProgram implements IXposedHookLoadPackage {
                                 return;
                             }
 
-                            XposedBridge.log("\n\n\n遍历content里的信息：");
-                            for(Map.Entry<String, Object> item : contentValues.valueSet())
-                            {
-                                XposedBridge.log(item.getKey() + " , " + item.getValue().toString());
-                            }
-                            XposedBridge.log("遍历content里的信息完成\n\n\n");
+//                            XposedBridge.log("\n\n\n遍历content里的信息：");
+//                            for(Map.Entry<String, Object> item : contentValues.valueSet())
+//                            {
+//                                XposedBridge.log(item.getKey() + " , " + item.getValue().toString());
+//                            }
+//                            XposedBridge.log("遍历content里的信息完成\n\n\n");
 
 
                             if (type == 318767153) {
@@ -182,19 +123,14 @@ public class XposedProgram implements IXposedHookLoadPackage {
 
                                 XposedBridge.log("开始通知客户端");
                                 XposedBridge.log("--------------------");
-//                                String data = "<id>" + (billId ++ ) + "</id>" +
-//                                        "<time>" + dateString + "</time>" +
-//                                        "<topline>" + "<key>" + topLineKey + "</key>" + "<value>" + money + "</value>" + "</topline>" +
-//                                        "<line>" + "<key>" + line0Title + "</key>" + "<value>" + line0Msg + "</value>" + "</line>" +
-//                                        "<line>" + "<key>" + line1Title + "</key>" + "<value>" + line1Msg + "</value>" + "</line>";
-                                //billCollections.add(data);
-                                //ConnServerSocketThread connServerSocketThread = new ConnServerSocketThread(data);
-                                //connServerSocketThread.start();
+                                String data = "<time>" + dateString + "</time>" +
+                                        "<topline>" + "<key>" + topLineKey + "</key>" + "<value>" + money + "</value>" + "</topline>" +
+                                        "<line>" + "<key>" + line0Title + "</key>" + "<value>" + line0Msg + "</value>" + "</line>" +
+                                        "<line>" + "<key>" + line1Title + "</key>" + "<value>" + line1Msg + "</value>" + "</line>";
                                 //把信息广播出去
-//                                Context context = (Context)param.thisObject;
-//                                Intent intent = new Intent("com.example.a32960.moudletest");
-//                                intent.putExtra("xmlData", data);
-//                                context.sendBroadcast(intent);
+                                Intent intent = new Intent("com.example.a32960.moudletest");
+                                intent.putExtra("xmlData", data);
+                                wxContext.sendBroadcast(intent);
 
                             }
                         } catch (Exception e) {
@@ -202,13 +138,6 @@ public class XposedProgram implements IXposedHookLoadPackage {
                         }
                     }
 
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param)
-                            throws Throwable {
-                    }
                 });
     }
-
-
-
 }

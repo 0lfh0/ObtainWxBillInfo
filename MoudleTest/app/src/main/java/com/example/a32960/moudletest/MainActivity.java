@@ -32,18 +32,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        long time = 1555067194;
-        Date currentTime = new Date();
-        currentTime.setTime(time);
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-        String dateString = formatter.format(currentTime);
-        System.out.println("时间时间：" +dateString);
 
         ListView billDetailList = (ListView)findViewById(R.id.bill_detail_list);
 
         billDetailListAdapter = new BillDetailListAdapter(this, billInfo);
         billDetailList.setAdapter(billDetailListAdapter);
         //注册广播
+        Toast.makeText(this, "开始接收广播", Toast.LENGTH_SHORT).show();
         IntentFilter filter = new IntentFilter("com.example.a32960.moudletest");
         receiver = new BillInfoReceiver( billDetailListAdapter, billInfo);
         registerReceiver(receiver, filter);
